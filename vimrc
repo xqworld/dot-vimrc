@@ -1,4 +1,8 @@
+set shell=/bin/bash
 source ~/.vim/bundles.vim
+
+let mapleader=';'
+let g:go_version_warning = 0
 
 " encoding dectection
 set fileencodings=utf-8,gb2312,gb18030,gbk,ucs-bom,cp936,latin1
@@ -13,14 +17,16 @@ syntax on
 " Vim UI
 "--------
 " color scheme
-set background=dark
-color solarized
+set background=dark "dark light
+"color solarized
 
 " highlight current line
 au WinLeave * set nocursorline nocursorcolumn
 au WinEnter * set cursorline cursorcolumn
 set cursorline cursorcolumn
+hi cursorcolumn ctermbg=lightblue  cterm=NONE
 
+set cc=80
 " search
 set incsearch
 "set highlight 	" conflict with highlight current line
@@ -39,7 +45,9 @@ set report=0                                                      " always repor
 set nowrap                                                        " dont wrap lines
 set scrolloff=5                                                   " 5 lines above/below cursor when scrolling
 set number                                                        " show line numbers
+set numberwidth=5
 set showmatch                                                     " show matching bracket (briefly jump)
+"set hlsearch                                                      " show matching bracket light.
 set showcmd                                                       " show typed command in status bar
 set title                                                         " show file in titlebar
 set laststatus=2                                                  " use 2 lines for the status bar
@@ -47,15 +55,34 @@ set matchtime=2                                                   " show matchin
 set matchpairs+=<:>                                               " specially for html
 " set relativenumber
 
+"set showtabline=2
+"set columns=80
+set nobackup
+set nowritebackup
+set noswapfile
+
 " Default Indentation
 set autoindent
 set smartindent     " indent when
 set tabstop=4       " tab width
 set softtabstop=4   " backspace
 set shiftwidth=4    " indent width
-" set textwidth=79
-" set smarttab
-set expandtab       " expand tab to space
+set smarttab
+set noexpandtab       " expand tab to space
+set textwidth=80
+set colorcolumn=+1
+
+" 设置显示空白字符
+set list
+set listchars=tab:»·,trail:-
+set autoread " 文件自动检测外部更改
+set iskeyword+=_,$,@,%,#  " 带有如下符号的单词不要被换行分割
+
+set ruler " 显示标尺，就是在右下角显示光标位置
+
+
+" tpope/vim-markdown
+autocmd BufNewFile,BufReadPost *.md set filetype=markdown
 
 autocmd FileType php setlocal tabstop=2 shiftwidth=2 softtabstop=2 textwidth=120
 autocmd FileType ruby setlocal tabstop=2 shiftwidth=2 softtabstop=2 textwidth=120
@@ -71,6 +98,11 @@ autocmd Syntax javascript set syntax=jquery   " JQuery syntax support
 let g:html_indent_inctags = "html,body,head,tbody"
 let g:html_indent_script1 = "inc"
 let g:html_indent_style1 = "inc"
+
+" -- ctags --
+map <F9> :!ctags -R --c++-kinds=+p --fields=+iaS --extra=+q .<CR><CR>
+set tags=tags,../tags;
+
 
 "-----------------
 " Plugin settings
@@ -97,9 +129,19 @@ let g:rbpt_colorpairs = [
 let g:rbpt_max = 16
 autocmd Syntax lisp,scheme,clojure,racket RainbowParenthesesToggle
 
-" tabbar
-let g:Tb_MaxSize = 2
-let g:Tb_TabWrap = 1
+nnoremap <leader>q :call QuickfixToggle()<cr>
+
+let g:quickfix_is_open = 0
+
+function! QuickfixToggle()
+    if g:quickfix_is_open
+        cclose
+        let g:quickfix_is_open = 0
+    else
+        copen
+        let g:quickfix_is_open = 1
+    endif
+endfunction
 
 hi Tb_Normal guifg=white ctermfg=white
 hi Tb_Changed guifg=green ctermfg=green
@@ -109,7 +151,16 @@ hi Tb_VisibleChanged guifg=green ctermbg=252 ctermfg=white
 " easy-motion
 let g:EasyMotion_leader_key = '<Leader>'
 
+map <F10> :set nohlsearch<CR><CR>
+" 当输入查找命令时，再启用高亮
+noremap * :set hlsearch<cr>*
+noremap n :set hlsearch<cr>n
+noremap N :set hlsearch<cr>N
+noremap / :set hlsearch<cr>/
+
 " Tagbar
+let g:Tb_MaxSize = 2
+let g:Tb_TabWrap = 1
 let g:tagbar_left=1
 let g:tagbar_width=30
 let g:tagbar_autofocus = 1
@@ -140,14 +191,43 @@ if executable('coffeetags')
     \ }
 endif
 
+" vim-multiple-cursors
+let g:multi_cursor_start_key='<C-n>'
+let g:multi_cursor_start_word_key='g<C-n>'
+let g:multi_cursor_next_key='<C-n>'
+let g:multi_cursor_prev_key='<C-p>'
+let g:multi_cursor_skip_key='<C-x>'
+let g:multi_cursor_quit_key='<Esc>'
+
+
 " Nerd Tree
+""当NERDTree为剩下的唯一窗口时自动关闭
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+""修改树的显示图标
+let g:NERDTreeDirArrowExpandable = '►'
+let g:NERDTreeDirArrowCollapsible = '▼'
+let NERDTreeAutoCenter=1
 let NERDChristmasTree=0
-let NERDTreeWinSize=30
 let NERDTreeChDirMode=2
-let NERDTreeIgnore=['\~$', '\.pyc$', '\.swp$']
-" let NERDTreeSortOrder=['^__\.py$', '\/$', '*', '\.swp$',  '\~$']
+let NERDTreeShowLineNumbers=1
 let NERDTreeShowBookmarks=1
+let NERDTreeShowHidden=0
+let NERDTreeWinSize=30
 let NERDTreeWinPos = "right"
+let NERDTreeIgnore=['\~$', '\.pyc$', '\.swp$']
+let g:NERDTreeIndicatorMapCustom = {
+    \ "Modified"  : "✹",
+    \ "Staged"    : "✚",
+    \ "Untracked" : "✭",
+    \ "Renamed"   : "➜",
+    \ "Unmerged"  : "═",
+    \ "Deleted"   : "✖",
+    \ "Dirty"     : "✗",
+    \ "Clean"     : "✔︎",
+    \ 'Ignored'   : '☒',
+    \ "Unknown"   : "?"
+    \ }
+
 
 " nerdcommenter
 let NERDSpaceDelims=1
@@ -194,6 +274,9 @@ let g:SuperTabRetainCompletionType=2
 " ctrlp
 set wildignore+=*/tmp/*,*.so,*.o,*.a,*.obj,*.swp,*.zip,*.pyc,*.pyo,*.class,.DS_Store  " MacOSX/Linux
 let g:ctrlp_custom_ignore = '\.git$\|\.hg$\|\.svn$'
+let g:ctrlp_max_depth = 40
+let g:ctrlp_max_files = 0
+
 
 " Keybindings for plugin toggle
 nnoremap <F2> :set invpaste paste?<CR>
@@ -203,8 +286,30 @@ nmap <F6> :NERDTreeToggle<cr>
 nmap <F3> :GundoToggle<cr>
 nmap <F4> :IndentGuidesToggle<cr>
 nmap  <D-/> :
+" Ack 代替grep搜索代码
 nnoremap <leader>a :Ack
+" 搜索当前光标所在单词
+nnoremap <leader>aa yaw:Ack! <C-R>0<cr>
+vnoremap <leader>aa y:Ack! <C-R>0<cr>
+nnoremap <leader>bb yaw:grep <C-R>0 . -nrI<cr>
+vnoremap <leader>bb y:grep <C-R>0 . -nrI<cr>
+
+map <leader>aaa :Ack!<Space>
+"高亮搜索关键词
+let g:ackhighlight = 1
+"修改快速预览窗口高度为15
+let g:ack_qhandler = "botright copen 15"
+"在QuickFix窗口使用快捷键以后，自动关闭QuickFix窗口
+let g:ack_autoclose = 1
+"使用ack的空白搜索，即不添加任何参数时对光标下的单词进行搜索，默认值为1，表示开启，置0以后使用空白搜索将返回错误信息
+let g:ack_use_cword_for_empty_search = 1
+if executable('rg')
+  let g:ackprg = 'rg --vimgrep'
+endif
+
 nnoremap <leader>v V`]
+" 内置grep搜索
+nmap <leader>lv :lv /<c-r>=expand("<cword>")<cr>/ %<cr>:lw<cr>
 
 "------------------
 " Useful Functions
@@ -223,24 +328,18 @@ autocmd BufReadPost *
       \     endif |
       \ endif
 
-" w!! to sudo & write a file
-cmap w!! %!sudo tee >/dev/null %
-
-" Quickly edit/reload the vimrc file
-nmap <silent> <leader>ev :e $MYVIMRC<CR>
-nmap <silent> <leader>sv :so $MYVIMRC<CR>
-
 " sublime key bindings
 nmap <D-]> >>
 nmap <D-[> <<
 vmap <D-[> <gv
 vmap <D-]> >gv
+vmap <C-C> "+y"
 
 " eggcache vim
 nnoremap ; :
 :command W w
 :command WQ wq
-:command Wq wq
+:command Wq w
 :command Q q
 :command Qa qa
 :command QA qa
@@ -251,7 +350,7 @@ if has("gui_running")
     "set transparency=30
     set guifont=Monaco:h13
     set showtabline=2
-    set columns=140
+    set columns=80
     set lines=40
     noremap <D-M-Left> :tabprevious<cr>
     noremap <D-M-Right> :tabnext<cr>
@@ -266,3 +365,201 @@ if has("gui_running")
     map <D-9> 9gt
     map <D-0> :tablast<CR>
 endif
+
+source ~/.vim.local
+
+
+"" vim youdao translater
+"vnoremap <silent> <C-T> :<C-u>Ydv<CR>
+"nnoremap <silent> <C-T> :<C-u>Ydc<CR>
+"noremap <leader>yd :<C-u>Yde<CR>
+"
+
+cmap shanchukongge % s/[\s 　]\+$//g
+map <leader><space> :FixWhitespace<cr>
+
+" cmap xianshitab set listchars=tab:>-,trail:-
+cmap xianshi set invlist
+cmap buxianshi set nolist
+
+set foldenable              " 开始折叠
+set foldmethod=syntax       " 设置语法折叠
+set foldcolumn=0            " 设置折叠区域的宽度
+setlocal foldlevel=1        " 设置折叠层数为
+set foldlevelstart=99       " 打开文件是默认不折叠代码
+
+"set foldclose=all          " 设置为自动关闭折叠
+nnoremap <space> @=((foldclosed(line('.')) < 0) ? 'zc' : 'zo')<CR>
+                            " 用空格键来开关折叠
+
+
+" Ctrl+j/k 切换标签页 +x 关闭标签页
+map <C-J> :Tbbp<cr>
+map <C-K> :Tbbn<cr>
+map <C-X> :Tbbd<cr>
+
+" 保存
+map <C-S> :w
+nnoremap <leader>ww :w<cr>
+nnoremap <leader>wq :wq<cr>
+
+" 显示十六进制
+" 最好先用 vim -b xxx 打开文件
+cmap hex %!xxd
+cmap nohex %!xxd -r
+cmap hexon %!xxd
+cmap hexoff %!xxd -r
+
+let g:ycm_global_ycm_extra_conf='~/.ycm_extra_conf.py'
+let g:ycm_semantic_triggers = {}
+let g:ycm_semantic_triggers.c = ['->', '.', '(', '[', '&']
+let g:ycm_collect_identifiers_from_tags_files=1
+let g:ycm_min_num_of_chars_for_completion=3
+let g:ycm_seed_identifiers_with_syntax=1
+
+
+"=============================================================================================
+"set for YouCompleteMe
+"=======begin=======
+" 安装vundle后安装YouCompleteMe
+"Plugin 'Valloric/YouCompleteMe'
+"设置<leader>的代表含义
+let mapleader=";"
+" 开启 YCM 标签补全引擎
+let g:ycm_collect_identifiers_from_tags_files = 1
+"设置快捷键映射 ;f 为 跳转到定义处
+"nnoremap <leader>f :YcmCompleter GoToDeclaration<CR>
+"nnoremap <C-n> :YcmCompleter GoToDeclaration<CR>
+"设置快捷键映射 ;d 为 跳转到声明处
+"nnoremap <C-m> :YcmCompleter GoToDefinition<CR>
+nnoremap <leader>d :YcmCompleter GoToDefinition<CR>
+"设置快捷键映射 ;g 为 跳转到定义和声明处
+"nnoremap <C-g> :YcmCompleter GoTo<CR>
+nnoremap <leader>g :YcmCompleter GoToDefinitionElseDeclaration<CR>
+
+nnoremap <leader>x :YcmCompleter FixIt<CR>
+"上下左右键的行为 会显示其他信息
+inoremap <expr> <Down>     pumvisible() ? "\<C-n>" : "\<Down>"
+inoremap <expr> <Up>       pumvisible() ? "\<C-p>" : "\<Up>"
+inoremap <expr> <PageDown> pumvisible() ? "\<PageDown>\<C-p>\<C-n>" : "\<PageDown>"
+inoremap <expr> <PageUp>   pumvisible() ? "\<PageUp>\<C-p>\<C-n>" : "\<PageUp>"
+" 多跳转是显示列表
+function s:CustomizeYcmQuickFixWindow()
+    " Move the window at the top of the screen.
+    execute "wincmd K"
+    " Set the Window height to 5.
+    execute "5wincmd _"
+endfunction
+autocmd User YcmQuickFixOpened call s:CustomizeYcmQuickFixWindow()
+"我靠,不要设置下面的内容,就可以实现用tab与s-tab选择自动补全列表
+"let g:ycm_key_list_select_completion=['<c-n>']
+"let g:ycm_key_list_select_completion = ['<Down>']
+"let g:ycm_key_list_previous_completion=['<c-p>']
+"let g:ycm_key_list_previous_completion = ['<Up>']
+
+"在错误行显示 >> 标志
+let g:ycm_error_symbol = '>>'
+"在警告行显示 >* 标志
+let g:ycm_warning_symbol = '>*'
+"设置快捷键映射 F4 为 显示编译的警告和错误信息
+nmap <F4> :YcmDiags<CR>
+"让Vim的补全菜单行为与一般IDE一致
+"set completeopt=longest,menu
+"离开插入模式后自动关闭预览窗口
+autocmd InsertLeave * if pumvisible() == 0|pclose|endif
+"回车即选中当前项
+inoremap <expr> <CR>  pumvisible() ? "\<C-y>":"\<CR>"
+"从第2个键入字符就开始罗列匹配项
+let g:ycm_min_num_of_chars_for_completion=2
+"语法关键字补全
+let g:ycm_seed_identifiers_with_syntax = 1
+"头文件补全
+let g:ycm_complete_in_strings = 1
+"注释和字符串中的文字也会被收入补全
+let g:ycm_collect_identifiers_from_comments_and_strings = 1
+"补全功能在注释中同样有效
+let g:ycm_complete_in_comments = 1
+"结构体，指针等元素的补全(. or ->)
+let g:ycm_key_invoke_completion = '<C-Space>'
+"允许 vim 加载 .ycm_extra_conf.py 文件，不再提示
+let g:ycm_confirm_extra_conf=0
+"默认加载的.ycm_extra_conf.py路径
+let g:ycm_global_ycm_extra_conf='~/.ycm_extra_conf.py'
+let g:ycm_global_ycm_extra_conf = '~/.vim/bundle/YouCompleteMe/.ycm_extra_conf.py'
+" YCM 集成 OmniCppComplete 补全引擎，设置其快捷键
+"inoremap <leader>; <C-x><C-o>
+" 补全内容不以分割子窗口形式出现，只显示补全列表test
+set completeopt-=preview
+" 禁止缓存匹配项，每次都重新生成匹配项
+let g:ycm_cache_omnifunc = 0
+"设置补全框前后景色
+"Pmenu 是框色, PmenuSel是框内选中的选项颜色
+"0-黑 1-红 2-绿 3-黄 4-蓝 5-浅紫 6-青 (其他数字没有尝试)
+highlight Pmenu ctermfg=0 ctermbg=5
+highlight PmenuSel ctermfg=0 ctermbg=3
+"=======end : YouCompleteMe=======
+
+" " YouCompleteMe 功能
+" " 补全功能在注释中同样有效
+" let g:ycm_complete_in_comments=0
+" " 允许 vim 加载 .ycm_extra_conf.py 文件，不再提示
+" let g:ycm_confirm_extra_conf=0
+" " 开启 YCM 基于标签引擎
+" let g:ycm_collect_identifiers_from_tags_files=1
+" " 引入 C++ 标准库tags，这个没有也没关系，只要.ycm_extra_conf.py文件中指定了正确的标准库路径
+" " set tags+=/data/misc/software/misc./vim/stdcpp.tags
+" " YCM 集成 OmniCppComplete 补全引擎，设置其快捷键
+" inoremap <leader>; <C-x><C-o>
+" " 补全内容不以分割子窗口形式出现，只显示补全列表
+" " set completeopt-=preview
+" " 从第二个键入字符就开始罗列匹配项
+" let g:ycm_min_num_of_chars_for_completion=2
+" " 禁止缓存匹配项，每次都重新生成匹配项
+" let g:ycm_cache_omnifunc=0
+" " 语法关键字补全
+" let g:ycm_seed_identifiers_with_syntax=1
+" " 修改对C函数的补全快捷键，默认是CTRL + space，修改为ALT + ;
+" let g:ycm_key_invoke_completion = '<M-;>'
+
+" set completeopt=longest,menu
+" " 设置转到定义处的快捷键为ALT + G，这个功能非常赞
+" nmap <M-g> :YcmCompleter GoToDefinitionElseDeclaration <C-R>=expand("<cword>")<CR><CR>
+" " 设置按哪个键上屏
+" let g:ycm_key_list_select_completion = ['<TAB>', '<Down>', '<Enter>']
+
+" gutentags 搜索工程目录的标志，当前文件路径向上递归直到碰到这些文件/目录名
+let g:gutentags_project_root = ['.root', '.svn', '.git', '.hg', '.project']
+
+" 调试用
+let g:gutentags_define_advanced_commands = 1
+let $GTAGSLABEL='native'
+
+" 所生成的数据文件的名称
+let g:gutentags_ctags_tagfile = '.tags'
+
+" 同时开启 ctags 和 gtags 支持：
+let g:gutentags_modules = []
+if executable('ctags')
+	let g:gutentags_modules += ['ctags']
+endif
+if executable('gtags-cscope') && executable('gtags')
+	let g:gutentags_modules += ['gtags_cscope']
+endif
+
+" 将自动生成的 ctags/gtags 文件全部放入 ~/.cache/tags 目录中，避免污染工程目录
+let g:gutentags_cache_dir = expand('~/.cache/tags')
+
+" 配置 ctags 的参数
+let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
+let g:gutentags_ctags_extra_args += ['--c++-kinds=+px']
+let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
+
+" 如果使用 universal ctags 需要增加下面一行
+let g:gutentags_ctags_extra_args += ['--output-format=e-ctags']
+
+" 禁用 gutentags 自动加载 gtags 数据库的行为
+let g:gutentags_auto_add_gtags_cscope = 0
+
+" set termguicolors
+" autocmd VimEnter *.md MarkdownPreview
+"
